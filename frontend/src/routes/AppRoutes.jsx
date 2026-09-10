@@ -13,60 +13,24 @@ import Login from "../pages/Login";
 import Signup from "../pages/Signup";
 import ForgotPassword from "../pages/ForgotPassword";
 
+// Protected User / Admin pages
+import Profile from "../pages/Profile";
+import AdminDashboard from "../pages/AdminDashboard";
+
 const AppRoutes = () => {
   return (
     <Routes>
-
-      {/* =========================
-          MAIN WEBSITE
-      ========================= */}
-
       <Route path="/" element={<Home />} />
-
-      <Route
-        path="/explore"
-        element={<Explore />}
-      />
-
-      <Route
-        path="/destinations"
-        element={<Destinations />}
-      />
-
-      <Route
-        path="/destination/:id"
-        element={<DestinationDetails />}
-      />
-
-      <Route
-        path="/virtual-tours"
-        element={<VirtualTours />}
-      />
-
-      <Route
-        path="/gallery"
-        element={<Gallery />}
-      />
-
-      {/* =========================
-          AUTHENTICATION
-      ========================= */}
-
-      <Route
-        path="/login"
-        element={<Login />}
-      />
-
-      <Route
-        path="/signup"
-        element={<Signup />}
-      />
-
-      <Route
-        path="/forgot-password"
-        element={<ForgotPassword />}
-      />
-
+      <Route path="/explore" element={<Explore />} />
+      <Route path="/destinations" element={<Destinations />} />
+      <Route path="/destination/:id" element={<DestinationDetails />} />
+      <Route path="/virtual-tours/:id" element={<VirtualTours />} />
+      <Route path="/gallery" element={<Gallery />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<Signup />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/profile" element={<Profile />} />
+      <Route path="/admin/dashboard" element={<AdminDashboard />} />
     </Routes>
   );
 };

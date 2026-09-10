@@ -5,56 +5,80 @@ import {
   Move3D,
   X,
 } from "lucide-react";
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useParams, useNavigate } from "react-router-dom";
 
 import PanoramaViewer from "../components/panorama/PanoramaViewer";
-
-const tours = [
-  {
-    id: "seven-sisters",
-    title: "Seven Sisters Falls",
-    location: "Cherrapunji",
-    description:
-      "A dramatic waterfall surrounded by Meghalaya's misty hills.",
-    image:
-      "https://commons.wikimedia.org/wiki/Special:FilePath/Seven%20Sister%20Waterfall%2C%20Cherrapunjee%2C%20Meghalaya.jpg?width=1200",
-    panorama: "https://photo-sphere-viewer.js.org/assets/sphere.jpg",
-  },
-  {
-    id: "umngot",
-    title: "Umngot River",
-    location: "Dawki",
-    description:
-      "Crystal-clear water flowing between the green hills of Dawki.",
-    image:
-      "https://commons.wikimedia.org/wiki/Special:FilePath/Dawki%20River.jpg?width=1200",
-    panorama: "https://photo-sphere-viewer.js.org/assets/sphere.jpg",
-  },
-  {
-    id: "nongriat",
-    title: "Living Root Bridge",
-    location: "Nongriat",
-    description:
-      "Walk through dense forests to discover Meghalaya's living root bridges.",
-    image:
-      "https://commons.wikimedia.org/wiki/Special:FilePath/Root%20Bridges%20at%20Nonghriat.jpg?width=1200",
-    panorama: "https://photo-sphere-viewer.js.org/assets/sphere.jpg",
-  },
-  {
-    id: "nohkalikai",
-    title: "Nohkalikai Falls",
-    location: "Cherrapunji",
-    description:
-      "A spectacular waterfall dropping into a deep turquoise pool.",
-    image:
-      "https://upload.wikimedia.org/wikipedia/commons/5/5e/Nohkalikai_Falls_Cherrapunji.JPG",
-    panorama: "https://photo-sphere-viewer.js.org/assets/sphere.jpg",
-  }, ,
-];
+import { fetchLocations, fetchLocationById } from "../services/api";
 
 const VirtualTours = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [tours, setTours] = useState([]);
   const [selectedTour, setSelectedTour] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const loadTourData = async () => {
+      try {
+        setLoading(true);
+        // Always fetch all tours so the page background and grid stay fully populated
+        const data = await fetchLocations();
+        const allTours = data || [];
+        setTours(allTours);
+
+        if (id) {
+          // Find the tour matching the route parameter id
+          const foundTour = allTours.find(
+            (tour) => tour._id === id || tour.id === id
+          );
+
+          if (foundTour) {
+            setSelectedTour(foundTour);
+          } else {
+            // Fallback to fetching directly by ID if not found in the array list
+            const singleData = await fetchLocationById(id);
+            if (singleData) {
+              setSelectedTour(singleData);
+            } else {
+              setError("Tour not found.");
+            }
+          }
+        } else {
+          setSelectedTour(null);
+        }
+      } catch (err) {
+        console.error("Failed to load virtual tours:", err);
+        setError("Failed to load virtual tour data.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadTourData();
+  }, [id]);
+
+  const handleOpenTour = (tour) => {
+    setSelectedTour(tour);
+    navigate(`/virtual-tours/${tour._id || tour.id}`, { replace: true });
+  };
+
+  const handleCloseTour = () => {
+    setSelectedTour(null);
+    navigate('/virtual-tours', { replace: true });
+  };
+
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-[#f7f7f3]">
+        <div className="h-9 w-9 animate-spin rounded-full border-2 border-gray-300 border-t-[#183c2c]" />
+      </div>
+    );
+  }
+
+  const featuredTour = tours[0];
+  const remainingTours = tours.slice(1);
 
   return (
     <div className="min-h-screen bg-[#f7f7f3] text-[#17221d]">
@@ -151,7 +175,7 @@ const VirtualTours = () => {
 
             <p className="mt-4 max-w-xl text-[15px] leading-6 text-gray-500">
               Step inside some of Meghalaya's most beautiful
-              places through immersive 360° experiences.
+              places through immersive 360° WebP experiences.
             </p>
 
           </div>
@@ -163,158 +187,161 @@ const VirtualTours = () => {
 
       {/* ================= FEATURED ================= */}
 
-      <section className="px-6 pb-16 lg:px-8">
+      {featuredTour && (
+        <section className="px-6 pb-16 lg:px-8">
 
-        <div className="mx-auto max-w-7xl">
+          <div className="mx-auto max-w-7xl">
 
-          <div className="grid overflow-hidden rounded-[24px] border border-gray-200 bg-white md:grid-cols-[1.35fr_1fr]">
+            <div className="grid overflow-hidden rounded-[24px] border border-gray-200 bg-white md:grid-cols-[1.35fr_1fr]">
 
-            {/* Image */}
+              {/* Image */}
 
-            <div className="relative h-[300px] md:h-[390px]">
+              <div className="relative h-[300px] md:h-[390px]">
 
-              <img
-                src={tours[0].image}
-                alt={tours[0].title}
-                className="h-full w-full object-cover"
-              />
+                <img
+                  src={featuredTour.image || featuredTour.views?.[0]?.iframeUrl || "https://images.unsplash.com/photo-1544735716-392fe2489ffa"}
+                  alt={featuredTour.title}
+                  className="h-full w-full object-cover"
+                />
 
-              <div className="absolute left-5 top-5">
-                <span className="rounded-full bg-black/45 px-3 py-1.5 text-[10px] font-medium text-white backdrop-blur-md">
-                  Featured experience
-                </span>
+                <div className="absolute left-5 top-5">
+                  <span className="rounded-full bg-black/45 px-3 py-1.5 text-[10px] font-medium text-white backdrop-blur-md">
+                    Featured experience
+                  </span>
+                </div>
+
+              </div>
+
+
+              {/* Content */}
+
+              <div className="flex flex-col justify-center p-7 sm:p-9 lg:p-11">
+
+                <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-emerald-700">
+                  {featuredTour.location || "Meghalaya"}
+                </p>
+
+                <h2 className="mt-3 text-[28px] font-semibold tracking-tight">
+                  {featuredTour.title}
+                </h2>
+
+                <p className="mt-3 text-[14px] leading-6 text-gray-500">
+                  {featuredTour.mainDescription || featuredTour.description || "A dramatic landscape surrounded by Meghalaya's misty green hills."}
+                </p>
+
+                <button
+                  onClick={() => handleOpenTour(featuredTour)}
+                  className="mt-7 flex w-fit items-center gap-2 rounded-full bg-[#183c2c] px-5 py-2.5 text-[13px] font-medium text-white transition hover:bg-[#214d39]"
+                >
+                  Enter 360°
+                  <Move3D size={15} />
+                </button>
+
               </div>
 
             </div>
 
-
-            {/* Content */}
-
-            <div className="flex flex-col justify-center p-7 sm:p-9 lg:p-11">
-
-              <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-emerald-700">
-                Cherrapunji
-              </p>
-
-              <h2 className="mt-3 text-[28px] font-semibold tracking-tight">
-                Seven Sisters Falls
-              </h2>
-
-              <p className="mt-3 text-[14px] leading-6 text-gray-500">
-                A dramatic waterfall surrounded by Meghalaya's
-                misty green hills.
-              </p>
-
-              <button
-                onClick={() => setSelectedTour(tours[0])}
-                className="mt-7 flex w-fit items-center gap-2 rounded-full bg-[#183c2c] px-5 py-2.5 text-[13px] font-medium text-white transition hover:bg-[#214d39]"
-              >
-                Enter 360°
-                <Move3D size={15} />
-              </button>
-
-            </div>
-
           </div>
 
-        </div>
-
-      </section>
+        </section>
+      )}
 
 
       {/* ================= TOUR CARDS ================= */}
 
-      <section className="border-y border-gray-200 bg-white px-6 py-16 lg:px-8">
+      {remainingTours.length > 0 && (
+        <section className="border-y border-gray-200 bg-white px-6 py-16 lg:px-8">
 
-        <div className="mx-auto max-w-7xl">
+          <div className="mx-auto max-w-7xl">
 
-          <div className="flex items-end justify-between">
+            <div className="flex items-end justify-between">
 
-            <div>
+              <div>
 
-              <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-emerald-700">
-                Virtual journeys
-              </p>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-emerald-700">
+                  Virtual journeys
+                </p>
 
-              <h2 className="mt-2 text-[28px] font-semibold tracking-tight md:text-[32px]">
-                More places to explore.
-              </h2>
+                <h2 className="mt-2 text-[28px] font-semibold tracking-tight md:text-[32px]">
+                  More places to explore.
+                </h2>
+
+              </div>
+
+              <Link
+                to="/explore"
+                className="hidden items-center gap-2 text-[13px] font-medium text-emerald-700 sm:flex"
+              >
+                View map
+                <ArrowRight size={15} />
+              </Link>
 
             </div>
 
-            <Link
-              to="/explore"
-              className="hidden items-center gap-2 text-[13px] font-medium text-emerald-700 sm:flex"
-            >
-              View map
-              <ArrowRight size={15} />
-            </Link>
 
-          </div>
+            <div className="mt-9 grid gap-5 md:grid-cols-3">
 
+              {remainingTours.map((tour) => (
 
-          <div className="mt-9 grid gap-5 md:grid-cols-3">
+                <article
+                  key={tour._id || tour.id}
+                  className="overflow-hidden rounded-[18px] border border-gray-200 bg-[#fafaf7] transition duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-black/5"
+                >
 
-            {tours.slice(1).map((tour) => (
+                  {/* Smaller image */}
 
-              <article
-                key={tour.id}
-                className="overflow-hidden rounded-[18px] border border-gray-200 bg-[#fafaf7] transition duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-black/5"
-              >
+                  <div className="relative h-[210px] overflow-hidden">
 
-                {/* Smaller image */}
+                    <img
+                      src={tour.image || "https://images.unsplash.com/photo-1544735716-392fe2489ffa"}
+                      alt={tour.title}
+                      className="h-full w-full object-cover transition duration-500 hover:scale-[1.03]"
+                    />
 
-                <div className="relative h-[210px] overflow-hidden">
+                    <div className="absolute bottom-4 left-4">
 
-                  <img
-                    src={tour.image}
-                    alt={tour.title}
-                    className="h-full w-full object-cover transition duration-500 hover:scale-[1.03]"
-                  />
+                      <span className="flex items-center gap-1.5 rounded-full bg-black/45 px-3 py-1.5 text-[10px] text-white backdrop-blur-md">
+                        <Compass size={12} />
+                        {tour.location || "Meghalaya"}
+                      </span>
 
-                  <div className="absolute bottom-4 left-4">
-
-                    <span className="flex items-center gap-1.5 rounded-full bg-black/45 px-3 py-1.5 text-[10px] text-white backdrop-blur-md">
-                      <Compass size={12} />
-                      {tour.location}
-                    </span>
+                    </div>
 
                   </div>
 
-                </div>
 
+                  {/* Card content */}
 
-                {/* Card content */}
+                  <div className="p-5">
 
-                <div className="p-5">
+                    <h3 className="text-[19px] font-semibold tracking-tight">
+                      {tour.title}
+                    </h3>
 
-                  <h3 className="text-[19px] font-semibold tracking-tight">
-                    {tour.title}
-                  </h3>
+                    <p className="mt-2 text-[13px] leading-5 text-gray-500 line-clamp-2">
+                      {tour.mainDescription || tour.description}
+                    </p>
 
-                  <p className="mt-2 text-[13px] leading-5 text-gray-500">
-                    {tour.description}
-                  </p>
+                    <button
+                      onClick={() => handleOpenTour(tour)}
+                      className="mt-5 inline-flex items-center gap-2 text-[13px] font-semibold text-[#183c2c] hover:text-emerald-700"
+                    >
+                      Explore 360°
+                      <ArrowRight size={14} />
+                    </button>
 
-                  <button
-                    onClick={() => setSelectedTour(tour)}
-                    className="mt-5 inline-flex items-center gap-2 text-[13px] font-semibold text-[#183c2c] hover:text-emerald-700"
-                  >
-                    Explore 360°
-                    <ArrowRight size={14} />
-                  </button>
+                  </div>
 
-                </div>
+                </article>
 
-              </article>
+              ))}
 
-            ))}
+            </div>
 
           </div>
 
-        </div>
-
-      </section>
+        </section>
+      )}
 
 
       {/* ================= HOW IT WORKS ================= */}
@@ -351,7 +378,7 @@ const VirtualTours = () => {
 
               <p className="mt-2 text-[13px] leading-5 text-gray-500">
                 Drag around the scene and explore the complete
-                360° environment.
+                360° WebP environment smoothly.
               </p>
 
             </div>
@@ -464,31 +491,38 @@ const VirtualTours = () => {
       </footer>
 
 
-      {/* ================= 360 VIEWER ================= */}
+      {/* ================= 360 VIEWER MODAL ================= */}
+
+      {/* ================= 360 VIEWER MODAL ================= */}
+
+      {/* ================= 360 VIEWER MODAL ================= */}
 
       {selectedTour && (
 
-        <div className="fixed inset-0 z-50 bg-black/80 p-3 backdrop-blur-sm sm:p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-3 backdrop-blur-sm sm:p-6">
 
-          <div className="relative h-full w-full overflow-hidden rounded-2xl bg-black">
+          <div className="relative h-full w-full max-w-7xl overflow-hidden rounded-2xl bg-black shadow-2xl">
 
             <button
-              onClick={() => setSelectedTour(null)}
+              onClick={handleCloseTour}
               className="absolute right-4 top-4 z-50 flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-md hover:bg-black/70"
             >
               <X size={18} />
             </button>
-
-            <PanoramaViewer
-              image={selectedTour.panorama}
-              title={selectedTour.title}
-            />
+          {console.log("Current Selected Tour Image:", selectedTour?.image)}
+           <PanoramaViewer
+  key={selectedTour._id || selectedTour.id}
+  image={selectedTour.image}
+  title={selectedTour.title}
+/>
 
           </div>
 
         </div>
 
       )}
+
+      
 
     </div>
   );
