@@ -23,9 +23,10 @@ const AppRoutes = () => {
       <Route path="/" element={<Home />} />
       <Route path="/explore" element={<Explore />} />
       <Route path="/destinations" element={<Destinations />} />
-      <Route path="/destination/:id" element={<DestinationDetails />} />
-      <Route path="/virtual-tours/:id" element={<VirtualTours />} />
-      <Route path="/gallery" element={<Gallery />} />
+<Route path="/destination/:id" element={<DestinationDetails />} />
+<Route path="/virtual-tours" element={<VirtualTours />} />
+<Route path="/virtual-tours/:id" element={<VirtualTours />} />
+<Route path="/gallery" element={<Gallery />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />

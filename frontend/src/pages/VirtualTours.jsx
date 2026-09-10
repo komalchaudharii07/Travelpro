@@ -14,6 +14,7 @@ import { fetchLocations, fetchLocationById } from "../services/api";
 const VirtualTours = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+
   const [tours, setTours] = useState([]);
   const [selectedTour, setSelectedTour] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -23,13 +24,13 @@ const VirtualTours = () => {
     const loadTourData = async () => {
       try {
         setLoading(true);
-        // Always fetch all tours so the page background and grid stay fully populated
+
         const data = await fetchLocations();
         const allTours = data || [];
+
         setTours(allTours);
 
         if (id) {
-          // Find the tour matching the route parameter id
           const foundTour = allTours.find(
             (tour) => tour._id === id || tour.id === id
           );
@@ -37,8 +38,8 @@ const VirtualTours = () => {
           if (foundTour) {
             setSelectedTour(foundTour);
           } else {
-            // Fallback to fetching directly by ID if not found in the array list
             const singleData = await fetchLocationById(id);
+
             if (singleData) {
               setSelectedTour(singleData);
             } else {
@@ -60,19 +61,35 @@ const VirtualTours = () => {
   }, [id]);
 
   const handleOpenTour = (tour) => {
-    setSelectedTour(tour);
-    navigate(`/virtual-tours/${tour._id || tour.id}`, { replace: true });
-  };
+  setSelectedTour(tour);
 
-  const handleCloseTour = () => {
-    setSelectedTour(null);
-    navigate('/virtual-tours', { replace: true });
-  };
+  const tourId = tour._id || tour.id;
+
+  navigate("/virtual-tours/" + tourId, {
+    replace: true,
+  });
+};
+
+const handleCloseTour = () => {
+  setSelectedTour(null);
+
+  navigate("/virtual-tours", {
+    replace: true,
+  });
+};
 
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center bg-[#f7f7f3]">
         <div className="h-9 w-9 animate-spin rounded-full border-2 border-gray-300 border-t-[#183c2c]" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#f7f7f3]">
+        <p className="text-sm text-red-600">{error}</p>
       </div>
     );
   }
@@ -194,12 +211,14 @@ const VirtualTours = () => {
 
             <div className="grid overflow-hidden rounded-[24px] border border-gray-200 bg-white md:grid-cols-[1.35fr_1fr]">
 
-              {/* Image */}
-
               <div className="relative h-[300px] md:h-[390px]">
 
                 <img
-                  src={featuredTour.image || featuredTour.views?.[0]?.iframeUrl || "https://images.unsplash.com/photo-1544735716-392fe2489ffa"}
+                  src={
+                    featuredTour.image ||
+                    featuredTour.views?.[0]?.iframeUrl ||
+                    "https://images.unsplash.com/photo-1544735716-392fe2489ffa"
+                  }
                   alt={featuredTour.title}
                   className="h-full w-full object-cover"
                 />
@@ -212,9 +231,6 @@ const VirtualTours = () => {
 
               </div>
 
-
-              {/* Content */}
-
               <div className="flex flex-col justify-center p-7 sm:p-9 lg:p-11">
 
                 <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-emerald-700">
@@ -226,7 +242,9 @@ const VirtualTours = () => {
                 </h2>
 
                 <p className="mt-3 text-[14px] leading-6 text-gray-500">
-                  {featuredTour.mainDescription || featuredTour.description || "A dramatic landscape surrounded by Meghalaya's misty green hills."}
+                  {featuredTour.mainDescription ||
+                    featuredTour.description ||
+                    "A dramatic landscape surrounded by Meghalaya's misty green hills."}
                 </p>
 
                 <button
@@ -278,7 +296,6 @@ const VirtualTours = () => {
 
             </div>
 
-
             <div className="mt-9 grid gap-5 md:grid-cols-3">
 
               {remainingTours.map((tour) => (
@@ -288,12 +305,13 @@ const VirtualTours = () => {
                   className="overflow-hidden rounded-[18px] border border-gray-200 bg-[#fafaf7] transition duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-black/5"
                 >
 
-                  {/* Smaller image */}
-
                   <div className="relative h-[210px] overflow-hidden">
 
                     <img
-                      src={tour.image || "https://images.unsplash.com/photo-1544735716-392fe2489ffa"}
+                      src={
+                        tour.image ||
+                        "https://images.unsplash.com/photo-1544735716-392fe2489ffa"
+                      }
                       alt={tour.title}
                       className="h-full w-full object-cover transition duration-500 hover:scale-[1.03]"
                     />
@@ -308,9 +326,6 @@ const VirtualTours = () => {
                     </div>
 
                   </div>
-
-
-                  {/* Card content */}
 
                   <div className="p-5">
 
@@ -362,7 +377,6 @@ const VirtualTours = () => {
 
           </div>
 
-
           <div className="mt-9 grid gap-5 md:grid-cols-3">
 
             <div className="rounded-[18px] border border-gray-200 bg-white p-6">
@@ -383,7 +397,6 @@ const VirtualTours = () => {
 
             </div>
 
-
             <div className="rounded-[18px] border border-gray-200 bg-white p-6">
 
               <Compass
@@ -401,7 +414,6 @@ const VirtualTours = () => {
               </p>
 
             </div>
-
 
             <div className="rounded-[18px] border border-gray-200 bg-white p-6">
 
@@ -493,15 +505,10 @@ const VirtualTours = () => {
 
       {/* ================= 360 VIEWER MODAL ================= */}
 
-      {/* ================= 360 VIEWER MODAL ================= */}
-
-      {/* ================= 360 VIEWER MODAL ================= */}
-
       {selectedTour && (
-
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-3 backdrop-blur-sm sm:p-6">
 
-          <div className="relative h-full w-full max-w-7xl overflow-hidden rounded-2xl bg-black shadow-2xl">
+          <div className="relative h-[650px] w-full max-w-5xl overflow-hidden rounded-2xl bg-black shadow-2xl">
 
             <button
               onClick={handleCloseTour}
@@ -509,20 +516,18 @@ const VirtualTours = () => {
             >
               <X size={18} />
             </button>
-          {console.log("Current Selected Tour Image:", selectedTour?.image)}
-           <PanoramaViewer
-  key={selectedTour._id || selectedTour.id}
-  image={selectedTour.image}
-  title={selectedTour.title}
-/>
+
+            <PanoramaViewer
+              image={
+                selectedTour.views?.[0]?.iframeUrl ||
+                selectedTour.image
+              }
+            />
 
           </div>
 
         </div>
-
       )}
-
-      
 
     </div>
   );
